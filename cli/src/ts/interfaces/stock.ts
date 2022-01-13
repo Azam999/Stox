@@ -13,10 +13,14 @@ interface IStock {
   regularMarketDayLow: number;
   regularMarketVolume: number;
   regularMarketPreviousClose: number;
-  postMarketChangePercent: number;
-  postMarketTime: number;
-  postMarketPrice: number;
-  postMarketChange: number;
+  postMarketChangePercent?: number;
+  postMarketTime?: number;
+  postMarketPrice?: number;
+  postMarketChange?: number;
+  preMarketChangePercent?: number;
+  preMarketTime?: number;
+  preMarketPrice?: number;
+  preMarketChange?: number;
   bid: number;
   ask: number;
   bidSize: number;

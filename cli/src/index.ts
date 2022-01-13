@@ -3,28 +3,18 @@ import chalk from 'chalk';
 import axios from 'axios';
 import Table from 'cli-table3';
 import IStock from './ts/interfaces/stock';
+import ora from 'ora';
+import StockData from './stockData';
 
 // Initialize commander
 const program = new Command();
+const stockData = new StockData();
 
 program
   .version('0.0.1')
   .description('A CLI to get market data and practice trading/investing')
   .showHelpAfterError(chalk.red('(use --help for available options)'))
   .showSuggestionAfterError();
-
-async function getIndices() {
-  const response = await axios.get('http://localhost:8080/indices');
-  return response.data;
-}
-
-async function getStockQuote(tickers: string[]) {
-  const tickers_array = tickers.join(',');
-  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${tickers_array}&range=1d&interval=5m&indicators=close&includeTimestamps=false&includePrePost=false&corsDomain=finance.yahoo.com&.tsrc=finance`;
-
-  const response = await axios.get(url);
-  return response.data.quoteResponse.result;
-}
 
 // Commands
 program
@@ -33,23 +23,11 @@ program
     'Get Major Indices: S&P 500, Dow Jones Industrial Average, Nasdaq Composite'
   )
   .action(async () => {
-    const indices = await getIndices();
+    const spinner = ora('Fetching indices...').start();
+    const indices = await stockData.getIndices();
+    spinner.stop();
     console.log(indices);
   });
-
-function largeNumberFormat(amount: number) {
-  const value =
-    amount >= 1.0e12
-      ? (amount / 1.0e12).toFixed(2) + 'T' // Trillion
-      : amount >= 1.0e9
-      ? (amount / 1.0e9).toFixed(2) + 'B' // Billion
-      : amount >= 1.0e6
-      ? (amount / 1.0e6).toFixed(2) + 'M' // Million
-      : amount >= 1.0e3
-      ? (amount / 1.0e3).toFixed(2) + 'K' // Thousand
-      : amount.toFixed(2);
-  return value;
-}
 
 const stockLabels = [
   'Ticker',
@@ -66,17 +44,21 @@ const stockLabels = [
   '52w High',
   '52w Low',
   'P/E',
+  'P/B',
   'Yield',
-  'Post Mkt Chng %',
+  'Pre %',
+  'After %',
 ];
 program
-  .command('ticker')
-  .argument('<ticker>', 'Ticker symbol')
+  .command('tickers')
+  .argument('<tickers>', 'Ticker symbol')
   .action(async (tickers: string) => {
-    let stockQuotes = await getStockQuote(tickers.split(','));
+    const spinner = ora('Fetching stock data...').start();
+    let stockQuotes = await stockData.getStockQuote(tickers.split(','));
+    spinner.stop();
 
     stockQuotes = stockQuotes.filter(
-      (stock: any) => stock.quoteType === 'EQUITY'
+      (stock: any) => stock.quoteType === 'EQUITY' || stock.quoteType === 'ETF'
     );
 
     const table = new Table({
@@ -90,20 +72,28 @@ program
         `$${stock.regularMarketPrice}`,
         `$${stock.regularMarketChange.toFixed(2)}`,
         `${stock.regularMarketChangePercent.toFixed(2)}%`,
-        stock.bid ? `$${stock.bid}`: 'N/A',
-        stock.ask ? `$${stock.ask}`: 'N/A',
+        stock.bid ? `$${stock.bid}` : 'N/A',
+        stock.ask ? `$${stock.ask}` : 'N/A',
         `$${stock.regularMarketOpen}`,
         `$${stock.regularMarketDayLow}`,
         `$${stock.regularMarketDayHigh}`,
-        largeNumberFormat(stock.regularMarketVolume).toLocaleString(),
-        `$${largeNumberFormat(stock.marketCap).toLocaleString()}`,
+        stockData.largeNumberFormat(stock.regularMarketVolume).toLocaleString(),
+        stock.marketCap
+          ? `$${stockData.largeNumberFormat(stock.marketCap).toLocaleString()}`
+          : 'N/A',
         `$${stock.fiftyTwoWeekHigh}`,
         `$${stock.fiftyTwoWeekLow}`,
-        stock.forwardPE.toFixed(2),
+        stock.trailingPE ? stock.trailingPE.toFixed(2) : 'N/A',
+        stock.priceToBook ? stock.priceToBook.toFixed(2) : 'N/A',
         stock.trailingAnnualDividendYield
           ? (stock.trailingAnnualDividendYield * 100).toFixed(2)
           : 'N/A',
-        stock.postMarketChangePercent.toFixed(2),
+        stock.preMarketChangePercent
+          ? stock.preMarketChangePercent.toFixed(2)
+          : 'N/A',
+        stock.postMarketChangePercent
+          ? stock.postMarketChangePercent.toFixed(2)
+          : 'N/A',
       ])
     );
 
