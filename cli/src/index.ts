@@ -29,30 +29,31 @@ program
     console.log(indices);
   });
 
-const stockLabels = [
-  'Ticker',
-  'Price',
-  'Chng',
-  'Chng %',
-  'Bid',
-  'Ask',
-  'Open',
-  'Low',
-  'High',
-  'Vol',
-  'Mkt Cap',
-  '52w High',
-  '52w Low',
-  'P/E',
-  'P/B',
-  'Yield',
-  'Pre %',
-  'After %',
-];
 program
   .command('tickers')
   .argument('<tickers>', 'Ticker symbol')
   .action(async (tickers: string) => {
+    const stockLabels = [
+      'Ticker',
+      'Price',
+      'Chng',
+      'Chng %',
+      'Bid',
+      'Ask',
+      'Open',
+      'Low',
+      'High',
+      'Vol',
+      'Mkt Cap',
+      '52w High',
+      '52w Low',
+      'P/E',
+      'P/B',
+      'Yield',
+      'Pre %',
+      'After %',
+    ];
+
     const spinner = ora('Fetching stock data...').start();
     let stockQuotes = await stockData.getStockQuote(tickers.split(','));
     spinner.stop();
@@ -98,6 +99,47 @@ program
     );
 
     console.log(table.toString());
+  });
+
+function printBalanceSheet(balanceSheets: any) {
+  for (let i = 0; i < balanceSheets.length; i++) {
+    const table = new Table({
+      head: ['Name', 'Value']
+    })
+
+    console.log(`\n\nDate: ${balanceSheets[i].endDate.fmt}`);
+
+    delete balanceSheets[i].maxAge;
+    delete balanceSheets[i].endDate;
+
+    for (let key in balanceSheets[i]) {
+      const value = key.replace(/([A-Z]+)*([A-Z])/g, "$1 $2");
+      const startCaseKey = value.charAt(0).toUpperCase() + value.slice(1);
+      table.push({ [startCaseKey]: balanceSheets[i][key].longFmt })
+    }
+
+    console.log(table.toString())
+  }
+}
+
+program
+  .command('balancesheet')
+  .argument('<period>')
+  .argument('<ticker>')
+  .action(async (period: string, ticker: string) => {
+    if (period === 'quarterly') {
+      const spinner = ora('Fetching balance sheet...').start();
+      const balanceSheets = await stockData.balanceSheetHistoryQuarterly(ticker);
+      spinner.stop();
+      
+      printBalanceSheet(balanceSheets);
+    } else if (period === 'annual') {
+      const spinner = ora('Fetching balance sheet...').start();
+      const balanceSheets = await stockData.balanceSheetHistory(ticker);
+      spinner.stop();
+
+      printBalanceSheet(balanceSheets);
+    }
   });
 
 program.parse(process.argv);
