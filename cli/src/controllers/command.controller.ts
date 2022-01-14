@@ -2,8 +2,9 @@ import ora from 'ora';
 import StockData from '../stockData';
 import FinanceUtility from '../financeUtlity';
 import Table from 'cli-table3';
-import IStock from '../ts/interfaces/stock';
 import chalk from 'chalk';
+import inquirer from 'inquirer';
+import InvestmentAccount from '../investmentAccount';
 
 class CommandController {
   static async stockQuotes(tickers: string) {
@@ -48,7 +49,11 @@ class CommandController {
       ...stockQuotes.map((stock: IStock) => [
         chalk.yellow(stock.symbol),
         chalk.white(`$${stock.regularMarketPrice}`),
-        FinanceUtility.greenOrRed(parseFloat(stock.regularMarketChange.toFixed(2)), '$', true),
+        FinanceUtility.greenOrRed(
+          parseFloat(stock.regularMarketChange.toFixed(2)),
+          '$',
+          true
+        ),
         FinanceUtility.greenOrRed(
           parseFloat(stock.regularMarketChangePercent.toFixed(2)),
           '%',
@@ -60,15 +65,15 @@ class CommandController {
         chalk.white(`$${stock.regularMarketDayLow}`),
         chalk.white(`$${stock.regularMarketDayHigh}`),
         chalk.white(
-          StockData
-            .largeNumberFormat(stock.regularMarketVolume)
-            .toLocaleString()
+          StockData.largeNumberFormat(
+            stock.regularMarketVolume
+          ).toLocaleString()
         ),
         chalk.white(
           stock.marketCap
-            ? `$${StockData
-                .largeNumberFormat(stock.marketCap)
-                .toLocaleString()}`
+            ? `$${StockData.largeNumberFormat(
+                stock.marketCap
+              ).toLocaleString()}`
             : 'N/A'
         ),
         chalk.white(`$${stock.fiftyTwoWeekHigh}`),
@@ -141,21 +146,22 @@ class CommandController {
   static async cashflowStatements(period: string, ticker: string) {
     if (period === 'quarterly') {
       const spinner = ora('Fetching cash flow statement...').start();
-      const cashflowStatements = await StockData.cashflowStatementHistoryQuarterly(
-        ticker
-      );
+      const cashflowStatements =
+        await StockData.cashflowStatementHistoryQuarterly(ticker);
       spinner.stop();
 
       FinanceUtility.printFinancialStatements(cashflowStatements);
     } else if (period === 'annual') {
       const spinner = ora('Fetching cash flow statement...').start();
-      const cashflowStatements = await StockData.cashflowStatementHistory(ticker);
+      const cashflowStatements = await StockData.cashflowStatementHistory(
+        ticker
+      );
       spinner.stop();
 
       FinanceUtility.printFinancialStatements(cashflowStatements);
     }
   }
-  
+
   static async indices() {
     const spinner = ora('Fetching indices...').start();
     const indices = await StockData.getIndices();
@@ -177,9 +183,58 @@ class CommandController {
         chalk.white(index.regularMarketPrice),
         FinanceUtility.greenOrRed(index.regularMarketChange, '$', true),
         FinanceUtility.greenOrRed(index.regularMarketChangePercent, '%', false),
-      ]));
+      ])
+    );
 
     console.log(table.toString());
+  }
+
+  static createAccount() {
+    // Investment Account Name
+    // Initial Balance
+    // Interest Rate
+
+    inquirer
+      .prompt([
+        {
+          type: 'input',
+          name: 'accountName',
+          message: chalk.blue('Account Name:'),
+        },
+        {
+          type: 'input',
+          name: 'initialBalance',
+          message: chalk.blue('Initial Balance ($):'),
+        },
+      ])
+      .then((info: any) => {
+        if (info.accountName && info.initialBalance) {
+          if (
+            typeof parseFloat(info.initialBalance) !== 'number' ||
+            parseFloat(info.initialBalance) <= 0
+          ) {
+            console.log(
+              `Initial balance must be a ${chalk.yellow(
+                'number'
+              )} and ${chalk.yellow('greater than 0')}.`
+            );
+          } else {
+            const account = new InvestmentAccount(
+              info.accountName,
+              info.initialBalance
+            );
+            console.log(account.details);
+          }
+        } else {
+          console.log(
+            `Failed to create an investment account. Please include the ${chalk.yellow(
+              'account name'
+            )} and ${chalk.yellow('initial balance')}.`
+          );
+        }
+      });
+
+    // Account.createAccount()
   }
 }
 

@@ -1,5 +1,4 @@
 import axios from 'axios';
-import FinanceModules from './ts/enums/financeModules';
 
 class StockData {
   // Access Yahoo Finance API

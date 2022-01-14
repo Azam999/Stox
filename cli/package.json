@@ -17,6 +17,7 @@
     "ora": "^5.4.1"
   },
   "devDependencies": {
-    "@types/chalk": "^2.2.0"
+    "@types/chalk": "^2.2.0",
+    "@types/inquirer": "^8.1.3"
   }
 }

@@ -23,37 +23,46 @@ program
 
 program
   .command('tickers')
-  .description('Get the data for a ticker or list of tickers separated by commas')
+  .description(
+    'Get the data for a ticker or list of tickers separated by commas'
+  )
   .argument('<tickers>', 'Ticker symbol')
   .action((tickers: string) => {
     CommandController.stockQuotes(tickers);
   });
 
 program
-  .command('balancesheet')
-  .description('Get the balance sheets for a ticker (quarterly or annual)')
+  .command('statement')
+  .description(
+    'Get the financial statements for a ticker (quarterly or annual)'
+  )
+  .argument('<statementName>')
   .argument('<period>')
   .argument('<ticker>')
-  .action((period: string, ticker: string) => {
-    CommandController.balanceSheets(period, ticker);
+  .action((statementName: string, period: string, ticker: string) => {
+    switch (statementName) {
+      case 'balancesheet':
+        CommandController.balanceSheets(period, ticker);
+        break;
+      case 'income':
+        CommandController.incomeStatements(period, ticker);
+        break;
+      case 'cashflow':
+        CommandController.cashflowStatements(period, ticker);
+        break;
+      default:
+        console.log(
+          chalk.red(
+            `${statementName} is not a valid statement name. Please use one of the following: balancesheet, income, cashflow`
+          )
+        );
+    }
   });
 
 program
-  .command('incomestatement')
-  .description('Get the income statements for a ticker (quarterly or annual)')
-  .argument('<period>')
-  .argument('<ticker>')
-  .action((period: string, ticker: string) => {
-    CommandController.incomeStatements(period, ticker);
-  });
-
-program
-  .command('cashflowstatement')
-  .description('Get the cash flow statements for a ticker (quarterly or annual)')
-  .argument('<period>')
-  .argument('<ticker>')
-  .action((period: string, ticker: string) => {
-    CommandController.cashflowStatements(period, ticker);
+  .command('create account')
+  .action(() => {
+    CommandController.createAccount();
   });
 
 program.parse(process.argv);
