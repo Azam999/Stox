@@ -5,15 +5,28 @@ class StockData {
   // Access Yahoo Finance API
   // All methods are static because they do not rely on any instance variables
   static yf_base_url: string = 'https://query2.finance.yahoo.com/v10/finance/quoteSummary/';
+  static yf_quote_url: string = 'https://query1.finance.yahoo.com/v7/finance/quote?symbols=';
+  static yf_quote_ending_url: string = '&range=1d&interval=5m&indicators=close&includeTimestamps=false&includePrePost=false&corsDomain=finance.yahoo.com&.tsrc=finance';
 
   static async getIndices() {
-    const response = await axios.get('http://localhost:8080/indices');
-    return response.data;
+    // ^GSPC = S&P 500
+    // ^DJI = Dow Jones Industrial Average
+    // ^IXIC = NASDAQ Composite
+    const indices = ['^GSPC', '^DJI', '^IXIC']
+    const responses = [];
+
+    for (let index of indices) {
+      const url = `${this.yf_quote_url}${index}${this.yf_quote_ending_url}`;
+      const response = await axios.get(url);
+      responses.push(response.data.quoteResponse.result[0]);
+    }
+
+    return responses
   }
 
   static async getStockQuote(tickers: string[]) {
     const tickers_array = tickers.join(',');
-    const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${tickers_array}&range=1d&interval=5m&indicators=close&includeTimestamps=false&includePrePost=false&corsDomain=finance.yahoo.com&.tsrc=finance`;
+    const url = `${this.yf_quote_url}${tickers_array}${this.yf_quote_ending_url}`;
   
     const response = await axios.get(url);
     return response.data.quoteResponse.result;
