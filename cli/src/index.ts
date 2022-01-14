@@ -5,10 +5,10 @@ import Table from 'cli-table3';
 import IStock from './ts/interfaces/stock';
 import ora from 'ora';
 import StockData from './stockData';
+import FinanceUtility from './FinanceUtility';
 
 // Initialize commander
 const program = new Command();
-const stockData = new StockData();
 
 program
   .version('0.0.1')
@@ -24,7 +24,7 @@ program
   )
   .action(async () => {
     const spinner = ora('Fetching indices...').start();
-    const indices = await stockData.getIndices();
+    const indices = await StockData.getIndices();
     spinner.stop();
     console.log(indices);
   });
@@ -55,7 +55,7 @@ program
     ];
 
     const spinner = ora('Fetching stock data...').start();
-    let stockQuotes = await stockData.getStockQuote(tickers.split(','));
+    let stockQuotes = await StockData.getStockQuote(tickers.split(','));
     spinner.stop();
 
     stockQuotes = stockQuotes.filter(
@@ -63,64 +63,68 @@ program
     );
 
     const table = new Table({
+      style: {
+        head: ['cyan'],
+      },
       head: stockLabels,
       colWidths: [10, 10],
     });
 
     table.push(
       ...stockQuotes.map((stock: IStock) => [
-        stock.symbol,
-        `$${stock.regularMarketPrice}`,
-        `$${stock.regularMarketChange.toFixed(2)}`,
-        `${stock.regularMarketChangePercent.toFixed(2)}%`,
-        stock.bid ? `$${stock.bid}` : 'N/A',
-        stock.ask ? `$${stock.ask}` : 'N/A',
-        `$${stock.regularMarketOpen}`,
-        `$${stock.regularMarketDayLow}`,
-        `$${stock.regularMarketDayHigh}`,
-        stockData.largeNumberFormat(stock.regularMarketVolume).toLocaleString(),
-        stock.marketCap
-          ? `$${stockData.largeNumberFormat(stock.marketCap).toLocaleString()}`
-          : 'N/A',
-        `$${stock.fiftyTwoWeekHigh}`,
-        `$${stock.fiftyTwoWeekLow}`,
-        stock.trailingPE ? stock.trailingPE.toFixed(2) : 'N/A',
-        stock.priceToBook ? stock.priceToBook.toFixed(2) : 'N/A',
-        stock.trailingAnnualDividendYield
-          ? (stock.trailingAnnualDividendYield * 100).toFixed(2)
-          : 'N/A',
+        chalk.yellow(stock.symbol),
+        chalk.white(`$${stock.regularMarketPrice}`),
+        FinanceUtility.greenOrRed(parseFloat(stock.regularMarketChange.toFixed(2)), '$', true),
+        FinanceUtility.greenOrRed(
+          parseFloat(stock.regularMarketChangePercent.toFixed(2)),
+          '%',
+          false
+        ),
+        chalk.white(`$${stock.bid}`),
+        chalk.white(`$${stock.ask}`),
+        chalk.white(`$${stock.regularMarketOpen}`),
+        chalk.white(`$${stock.regularMarketDayLow}`),
+        chalk.white(`$${stock.regularMarketDayHigh}`),
+        chalk.white(
+          StockData
+            .largeNumberFormat(stock.regularMarketVolume)
+            .toLocaleString()
+        ),
+        chalk.white(
+          stock.marketCap
+            ? `$${StockData
+                .largeNumberFormat(stock.marketCap)
+                .toLocaleString()}`
+            : 'N/A'
+        ),
+        chalk.white(`$${stock.fiftyTwoWeekHigh}`),
+        chalk.white(`$${stock.fiftyTwoWeekLow}`),
+        chalk.white(stock.trailingPE ? stock.trailingPE.toFixed(2) : 'N/A'),
+        chalk.white(stock.priceToBook ? stock.priceToBook.toFixed(2) : 'N/A'),
+        chalk.white(
+          stock.trailingAnnualDividendYield
+            ? (stock.trailingAnnualDividendYield * 100).toFixed(2)
+            : 'N/A'
+        ),
         stock.preMarketChangePercent
-          ? stock.preMarketChangePercent.toFixed(2)
-          : 'N/A',
+          ? FinanceUtility.greenOrRed(
+              parseFloat(stock.preMarketChangePercent.toFixed(2)),
+              '%',
+              false
+            )
+          : chalk.white('N/A'),
         stock.postMarketChangePercent
-          ? stock.postMarketChangePercent.toFixed(2)
-          : 'N/A',
+          ? FinanceUtility.greenOrRed(
+              parseFloat(stock.postMarketChangePercent.toFixed(2)),
+              '%',
+              false
+            )
+          : chalk.white('N/A'),
       ])
     );
 
     console.log(table.toString());
   });
-
-function printBalanceSheet(balanceSheets: any) {
-  for (let i = 0; i < balanceSheets.length; i++) {
-    const table = new Table({
-      head: ['Name', 'Value']
-    })
-
-    console.log(`\n\nDate: ${balanceSheets[i].endDate.fmt}`);
-
-    delete balanceSheets[i].maxAge;
-    delete balanceSheets[i].endDate;
-
-    for (let key in balanceSheets[i]) {
-      const value = key.replace(/([A-Z]+)*([A-Z])/g, "$1 $2");
-      const startCaseKey = value.charAt(0).toUpperCase() + value.slice(1);
-      table.push({ [startCaseKey]: balanceSheets[i][key].longFmt })
-    }
-
-    console.log(table.toString())
-  }
-}
 
 program
   .command('balancesheet')
@@ -129,16 +133,42 @@ program
   .action(async (period: string, ticker: string) => {
     if (period === 'quarterly') {
       const spinner = ora('Fetching balance sheet...').start();
-      const balanceSheets = await stockData.balanceSheetHistoryQuarterly(ticker);
-      spinner.stop();
-      
-      printBalanceSheet(balanceSheets);
-    } else if (period === 'annual') {
-      const spinner = ora('Fetching balance sheet...').start();
-      const balanceSheets = await stockData.balanceSheetHistory(ticker);
+      const balanceSheets = await StockData.balanceSheetHistoryQuarterly(
+        ticker
+      );
       spinner.stop();
 
-      printBalanceSheet(balanceSheets);
+      FinanceUtility.printFinancialStatements(balanceSheets);
+    } else if (period === 'annual') {
+      const spinner = ora('Fetching balance sheet...').start();
+      const balanceSheets = await StockData.balanceSheetHistory(ticker);
+      spinner.stop();
+
+      FinanceUtility.printFinancialStatements(balanceSheets);
+    }
+  });
+
+program
+  .command('incomestatement')
+  .argument('<period>')
+  .argument('<ticker>')
+  .action(async (period: string, ticker: string) => {
+    if (period === 'quarterly') {
+      const spinner = ora('Fetching income statement...').start();
+      const incomeStatements = await StockData.incomeStatementHistoryQuarterly(
+        ticker
+      );
+      spinner.stop();
+
+      FinanceUtility.removeEmptyIncomeStatementValues(incomeStatements);
+      FinanceUtility.printFinancialStatements(incomeStatements);
+    } else if (period === 'annual') {
+      const spinner = ora('Fetching income statement...').start();
+      const incomeStatements = await StockData.incomeStatementHistory(ticker);
+      spinner.stop();
+
+      FinanceUtility.removeEmptyIncomeStatementValues(incomeStatements);
+      FinanceUtility.printFinancialStatements(incomeStatements);
     }
   });
 
