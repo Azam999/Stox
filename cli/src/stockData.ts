@@ -59,13 +59,13 @@ class StockData {
   static async cashflowStatementHistory(ticker: string) {
     const url = `${this.yf_base_url}${ticker}?modules=${FinanceModules.CASHFLOW_STATEMENT_HISTORY}`;
     const response = await axios.get(url);
-    return response.data;
+    return response.data.quoteSummary.result[0].cashflowStatementHistory.cashflowStatements;
   }
 
   static async cashflowStatementHistoryQuarterly(ticker: string) {
     const url = `${this.yf_base_url}${ticker}?modules=${FinanceModules.CASHFLOW_STATEMENT_HISTORY_QUARTERLY}`;
     const response = await axios.get(url);
-    return response.data;
+    return response.data.quoteSummary.result[0].cashflowStatementHistoryQuarterly.cashflowStatements;
   }
 
   static async defaultKeyStatistics(ticker: string) {

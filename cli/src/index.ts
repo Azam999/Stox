@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import CommandController from './controllers/CommandController';
+import CommandController from './controllers/command.controller';
 
 // Initialize commander
 const program = new Command();
@@ -45,6 +45,15 @@ program
   .argument('<ticker>')
   .action((period: string, ticker: string) => {
     CommandController.incomeStatements(period, ticker);
+  });
+
+program
+  .command('cashflowstatement')
+  .description('Get the cash flow statements for a ticker (quarterly or annual)')
+  .argument('<period>')
+  .argument('<ticker>')
+  .action((period: string, ticker: string) => {
+    CommandController.cashflowStatements(period, ticker);
   });
 
 program.parse(process.argv);

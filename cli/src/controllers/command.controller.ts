@@ -1,6 +1,6 @@
 import ora from 'ora';
 import StockData from '../stockData';
-import FinanceUtility from '../FinanceUtility';
+import FinanceUtility from '../financeUtlity';
 import Table from 'cli-table3';
 import IStock from '../ts/interfaces/stock';
 import chalk from 'chalk';
@@ -135,6 +135,24 @@ class CommandController {
 
       FinanceUtility.removeEmptyIncomeStatementValues(incomeStatements);
       FinanceUtility.printFinancialStatements(incomeStatements);
+    }
+  }
+
+  static async cashflowStatements(period: string, ticker: string) {
+    if (period === 'quarterly') {
+      const spinner = ora('Fetching cash flow statement...').start();
+      const cashflowStatements = await StockData.cashflowStatementHistoryQuarterly(
+        ticker
+      );
+      spinner.stop();
+
+      FinanceUtility.printFinancialStatements(cashflowStatements);
+    } else if (period === 'annual') {
+      const spinner = ora('Fetching cash flow statement...').start();
+      const cashflowStatements = await StockData.cashflowStatementHistory(ticker);
+      spinner.stop();
+
+      FinanceUtility.printFinancialStatements(cashflowStatements);
     }
   }
   
