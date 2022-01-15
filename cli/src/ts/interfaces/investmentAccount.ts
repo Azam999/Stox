@@ -1,3 +1,4 @@
+import { ITransactionType, ISecurityType } from '../enums/investmentAccount';
 interface ITransaction {
   type: ITransactionType;
   securityType: ISecurityType;
@@ -7,3 +8,5 @@ interface ITransaction {
   date: Date;
   // orderType: string
 }
+
+export default ITransaction;

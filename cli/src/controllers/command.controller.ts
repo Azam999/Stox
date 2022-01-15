@@ -1,10 +1,11 @@
 import ora from 'ora';
 import StockData from '../stockData';
-import FinanceUtility from '../financeUtlity';
+import FinanceUtility from '../financeUtility';
 import Table from 'cli-table3';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import InvestmentAccount from '../investmentAccount';
+import IStock from '../ts/interfaces/stock';
 
 class CommandController {
   static async stockQuotes(tickers: string) {
@@ -233,8 +234,6 @@ class CommandController {
           );
         }
       });
-
-    // Account.createAccount()
   }
 }
 

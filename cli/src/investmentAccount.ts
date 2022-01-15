@@ -1,4 +1,4 @@
-import chalk from 'chalk';
+import ITransaction from "./ts/interfaces/investmentAccount";
 
 class InvestmentAccount {
   _accountName: string;

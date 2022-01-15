@@ -36,3 +36,5 @@ enum FinanceModules {
   UPGRADE_DOWNGRADE_HISTORY = 'upgradeDowngradeHistory',
   PAGE_VIEWS = 'pageViews',
 }
+
+export default FinanceModules;

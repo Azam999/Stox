@@ -80,3 +80,5 @@ interface IStock {
   displayName: string;
   symbol: string;
 }
+
+export default IStock;

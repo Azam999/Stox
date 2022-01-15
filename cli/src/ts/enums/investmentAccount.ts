@@ -9,3 +9,5 @@ enum ITransactionType {
   BUY = 'BUY',
   SELL = 'SELL',
 }
+
+export { ISecurityType, ITransactionType };
