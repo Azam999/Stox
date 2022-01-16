@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import CommandController from './controllers/command.controller';
+import { TransactionType } from './ts/enums/investmentAccount';
 
 // Initialize commander
 const program = new Command();
@@ -60,9 +61,29 @@ program
   });
 
 program
-  .command('create account')
-  .action(() => {
-    CommandController.createAccount();
+  .command('account')
+  .argument('<action>')
+  .action((action: string) => {
+    CommandController.accountAction(action);
+  });
+
+program
+  .command('account')
+  .argument('<orderType>')
+  .argument('<ticker>')
+  .argument('<quantity>')
+  .action((orderType: string, ticker: string, quantity: number) => {
+    if (orderType.toUpperCase() == TransactionType.BUY) {
+      CommandController.marketOrder(TransactionType.BUY, ticker, quantity);
+    } else if (orderType.toUpperCase() == TransactionType.SELL) {
+      CommandController.marketOrder(TransactionType.SELL, ticker, quantity);
+    } else {
+      console.log(
+        chalk.red(
+          `${orderType} is not a valid order type. Please use one of the following: buy, sell`
+        )
+      );
+    }
   });
 
 program.parse(process.argv);

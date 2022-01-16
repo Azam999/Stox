@@ -6,6 +6,9 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import InvestmentAccount from '../investmentAccount';
 import IStock from '../ts/interfaces/stock';
+import Configstore from 'configstore';
+import { TransactionType } from '../ts/enums/investmentAccount';
+import config from '../config/config';
 
 class CommandController {
   static async stockQuotes(tickers: string) {
@@ -190,12 +193,13 @@ class CommandController {
     console.log(table.toString());
   }
 
-  static createAccount() {
+  static accountAction(action: string) {
     // Investment Account Name
     // Initial Balance
     // Interest Rate
 
-    inquirer
+    if (action == 'create') {
+      inquirer
       .prompt([
         {
           type: 'input',
@@ -222,8 +226,19 @@ class CommandController {
           } else {
             const account = new InvestmentAccount(
               info.accountName,
-              info.initialBalance
+              parseFloat(info.initialBalance)
             );
+
+            config.set('accounts', [
+              ...config.get('accounts'),
+              {
+                name: info.accountName,
+                number: account.accountNumber,
+                balance: parseFloat(info.initialBalance),
+                initialBalance: parseFloat(info.initialBalance),
+              },
+            ]);
+
             console.log(account.details);
           }
         } else {
@@ -234,6 +249,53 @@ class CommandController {
           );
         }
       });
+    } else if (action == 'remove') {
+      const accounts = config.get('accounts');
+
+      if (accounts.length > 0) {
+        inquirer
+        .prompt([
+          {
+            type: 'list',
+            name: 'account',
+            message: chalk.blue('Select an account to remove:'),
+            choices: accounts.map((account: any) => account.name),
+          },
+        ])
+        .then((info: any) => {
+          if (info.account) {
+            const index = accounts.findIndex(
+              (account: any) => account.name === info.account
+            );
+
+            if (index > -1) {
+              config.set('accounts', accounts.filter((_: any, i: number) => i !== index));
+              console.log(`Account ${info.account} removed.`);
+            } else {
+              console.log(`Account ${info.account} not found.`);
+            }
+          }
+        });
+      } else {
+        console.log(`No accounts found.`);
+      }
+    }
+  }
+
+  static async marketOrder(
+    orderType: TransactionType,
+    ticker: string,
+    quantity: number
+  ) {
+    // const spinner = ora('Placing market order...').start();
+
+    if (orderType === TransactionType.BUY) {
+      const order = await InvestmentAccount.buyOrder(ticker, quantity);
+      // {type: 'buy'}
+    } else if (orderType === TransactionType.SELL) {
+      const order = await InvestmentAccount.sellOrder(ticker, quantity);
+      console.log(order);
+    }
   }
 }
 

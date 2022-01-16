@@ -1,7 +1,7 @@
-import { ITransactionType, ISecurityType } from '../enums/investmentAccount';
+import { TransactionType, SecurityType } from '../enums/investmentAccount';
 interface ITransaction {
-  type: ITransactionType;
-  securityType: ISecurityType;
+  type: TransactionType;
+  securityType: SecurityType;
   symbol: string;
   quantity: number;
   price: number;
