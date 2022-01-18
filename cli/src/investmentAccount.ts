@@ -49,6 +49,7 @@ class InvestmentAccount {
     const totalPrice = stockPrice * quantity;
     const date = Date.now();
     return {
+      type: 'buy',
       ticker,
       stockPrice,
       quantity,
@@ -58,7 +59,18 @@ class InvestmentAccount {
   }
 
   static async sellOrder(ticker: string, quantity: number) {
-
+    const stock: IStock[] = await StockData.getStockQuote([ticker]);
+    const stockPrice = stock[0].regularMarketPrice;
+    const totalPrice = stockPrice * quantity;
+    const date = Date.now();
+    return {
+      type: 'sell',
+      ticker,
+      stockPrice,
+      quantity,
+      totalPrice,
+      date,
+    };
   }
 
   get holdings(): string[] {

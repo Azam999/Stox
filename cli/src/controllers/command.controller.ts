@@ -200,82 +200,89 @@ class CommandController {
 
     if (action == 'create') {
       inquirer
-      .prompt([
-        {
-          type: 'input',
-          name: 'accountName',
-          message: chalk.blue('Account Name:'),
-        },
-        {
-          type: 'input',
-          name: 'initialBalance',
-          message: chalk.blue('Initial Balance ($):'),
-        },
-      ])
-      .then((info: any) => {
-        if (info.accountName && info.initialBalance) {
-          if (
-            typeof parseFloat(info.initialBalance) !== 'number' ||
-            parseFloat(info.initialBalance) <= 0
-          ) {
-            console.log(
-              `Initial balance must be a ${chalk.yellow(
-                'number'
-              )} and ${chalk.yellow('greater than 0')}.`
-            );
+        .prompt([
+          {
+            type: 'input',
+            name: 'accountName',
+            message: chalk.blue('Account Name:'),
+          },
+          {
+            type: 'input',
+            name: 'initialBalance',
+            message: chalk.blue('Initial Balance ($):'),
+          },
+        ])
+        .then((info: any) => {
+          if (info.accountName && info.initialBalance) {
+            if (
+              typeof parseFloat(info.initialBalance) !== 'number' ||
+              parseFloat(info.initialBalance) <= 0
+            ) {
+              console.log(
+                `Initial balance must be a ${chalk.yellow(
+                  'number'
+                )} and ${chalk.yellow('greater than 0')}.`
+              );
+            } else {
+              const account = new InvestmentAccount(
+                info.accountName,
+                parseFloat(info.initialBalance)
+              );
+
+              config.set('accounts', [
+                ...config.get('accounts'),
+                {
+                  name: info.accountName,
+                  number: account.accountNumber,
+                  balance: parseFloat(info.initialBalance),
+                  initialBalance: parseFloat(info.initialBalance),
+                },
+              ]);
+
+              // Initialize where orders will be placed
+              config.set(`orders.${account.accountNumber}`, []);
+
+              console.log(account.details);
+            }
           } else {
-            const account = new InvestmentAccount(
-              info.accountName,
-              parseFloat(info.initialBalance)
+            console.log(
+              `Failed to create an investment account. Please include the ${chalk.yellow(
+                'account name'
+              )} and ${chalk.yellow('initial balance')}.`
             );
-
-            config.set('accounts', [
-              ...config.get('accounts'),
-              {
-                name: info.accountName,
-                number: account.accountNumber,
-                balance: parseFloat(info.initialBalance),
-                initialBalance: parseFloat(info.initialBalance),
-              },
-            ]);
-
-            console.log(account.details);
           }
-        } else {
-          console.log(
-            `Failed to create an investment account. Please include the ${chalk.yellow(
-              'account name'
-            )} and ${chalk.yellow('initial balance')}.`
-          );
-        }
-      });
+        });
     } else if (action == 'remove') {
       const accounts = config.get('accounts');
 
       if (accounts.length > 0) {
         inquirer
-        .prompt([
-          {
-            type: 'list',
-            name: 'account',
-            message: chalk.blue('Select an account to remove:'),
-            choices: accounts.map((account: any) => account.name),
-          },
-        ])
-        .then((info: any) => {
-          if (info.account) {
-            const index = accounts.findIndex(
-              (account: any) => account.name === info.account
-            );
+          .prompt([
+            {
+              type: 'list',
+              name: 'account',
+              message: chalk.blue('Select an account to remove:'),
+              choices: accounts.map((account: any) => account.name),
+            },
+          ])
+          .then((info: any) => {
+            if (info.account) {
+              const index = accounts.findIndex(
+                (account: any) => account.name === info.account
+              );
 
-            if (index > -1) {
-              config.set('accounts', accounts.filter((_: any, i: number) => i !== index));
-              console.log(`Account ${info.account} removed.`);
-            } else {
-              console.log(`Account ${info.account} not found.`);
+              if (index > -1) {
+                config.set(
+                  'accounts',
+                  accounts.filter((_: any, i: number) => i !== index)
+                );
+                // config.delete(`orders.${accountNumber}`)
+                console.log(`Account ${info.account} removed.`);
+              } else {
+                console.log(`Account ${info.account} not found.`);
+              }
             }
-          }
-        });
+          });
       } else {
         console.log(`No accounts found.`);
       }
@@ -283,18 +290,42 @@ class CommandController {
   }
 
   static async marketOrder(
+    accountNumber: number,
     orderType: TransactionType,
     ticker: string,
     quantity: number
   ) {
+
     // const spinner = ora('Placing market order...').start();
+
+    const accounts = config.get('accounts');
+    let account: {
+      account: object;
+      index: number;
+    } = {
+      account: {},
+      index: -1,
+    };
+    for (let i = 0; i < accounts.length; i++) {
+      if (accounts[i].number === accountNumber) {
+        account.account = accounts[i];
+        account.index = i;
+        console.log('Account found:', account);
+      }
+    }
 
     if (orderType === TransactionType.BUY) {
       const order = await InvestmentAccount.buyOrder(ticker, quantity);
-      // {type: 'buy'}
+      config.set('orders', {
+        ...config.get('orders'),
+        [accountNumber]: [...config.get(`orders.${accountNumber}`), order].filter(Boolean)
+      });
     } else if (orderType === TransactionType.SELL) {
       const order = await InvestmentAccount.sellOrder(ticker, quantity);
-      console.log(order);
+      config.set('orders', {
+        ...config.get('orders'),
+        [accountNumber]: [...config.get(`orders.${accountNumber}`), order].filter(Boolean)
+      });
     }
   }
 }

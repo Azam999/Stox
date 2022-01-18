@@ -7,6 +7,7 @@ import { TransactionType } from './ts/enums/investmentAccount';
 const program = new Command();
 
 program
+  .name('stox')
   .version('0.0.1')
   .description('A CLI to get market data and practice trading/investing')
   .showHelpAfterError(chalk.red('(use --help for available options)'))
@@ -64,19 +65,21 @@ program
   .command('account')
   .argument('<action>')
   .action((action: string) => {
+    console.log('run account action')
     CommandController.accountAction(action);
   });
 
 program
-  .command('account')
+  .command('order')
+  .argument('<accountNumber')
   .argument('<orderType>')
   .argument('<ticker>')
   .argument('<quantity>')
-  .action((orderType: string, ticker: string, quantity: number) => {
+  .action((accountNumber: number, orderType: string, ticker: string, quantity: number) => {
     if (orderType.toUpperCase() == TransactionType.BUY) {
-      CommandController.marketOrder(TransactionType.BUY, ticker, quantity);
+      CommandController.marketOrder(accountNumber, TransactionType.BUY, ticker, quantity);
     } else if (orderType.toUpperCase() == TransactionType.SELL) {
-      CommandController.marketOrder(TransactionType.SELL, ticker, quantity);
+      CommandController.marketOrder(accountNumber, TransactionType.SELL, ticker, quantity);
     } else {
       console.log(
         chalk.red(
