@@ -6,7 +6,6 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import InvestmentAccount from '../investmentAccount';
 import IStock from '../ts/interfaces/stock';
-import Configstore from 'configstore';
 import { TransactionType } from '../ts/enums/investmentAccount';
 import config from '../config/config';
 
@@ -270,13 +269,14 @@ class CommandController {
               const index = accounts.findIndex(
                 (account: any) => account.name === info.account
               );
+              const accountNumber = accounts[index].number;
 
               if (index > -1) {
+                config.delete(`orders.${accountNumber}`)
                 config.set(
                   'accounts',
                   accounts.filter((_: any, i: number) => i !== index)
                 );
-                // config.delete(`orders.${accountNumber}`)
                 console.log(`Account ${info.account} removed.`);
               } else {
                 console.log(`Account ${info.account} not found.`);

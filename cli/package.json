@@ -1,10 +1,10 @@
 {
-  "name": "stock-cli",
+  "name": "stox",
   "version": "1.0.0",
   "description": "Stock CLI",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev:build": "tsc -w"
   },
   "author": "Azam Ahmed",
   "license": "ISC",

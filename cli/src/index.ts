@@ -3,6 +3,8 @@ import chalk from 'chalk';
 import CommandController from './controllers/command.controller';
 import { TransactionType } from './ts/enums/investmentAccount';
 
+
+
 // Initialize commander
 const program = new Command();
 
@@ -65,7 +67,6 @@ program
   .command('account')
   .argument('<action>')
   .action((action: string) => {
-    console.log('run account action')
     CommandController.accountAction(action);
   });
 
