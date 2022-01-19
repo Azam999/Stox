@@ -272,12 +272,50 @@ class CommandController {
               const accountNumber = accounts[index].number;
 
               if (index > -1) {
-                config.delete(`orders.${accountNumber}`)
+                config.delete(`orders.${accountNumber}`);
                 config.set(
                   'accounts',
                   accounts.filter((_: any, i: number) => i !== index)
                 );
                 console.log(`Account ${info.account} removed.`);
+              } else {
+                console.log(`Account ${info.account} not found.`);
+              }
+            }
+          });
+      } else {
+        console.log(`No accounts found.`);
+      }
+    } else if (action == 'reset') {
+      const accounts = config.get('accounts');
+
+      if (accounts.length > 0) {
+        inquirer
+          .prompt([
+            {
+              type: 'list',
+              name: 'account',
+              message: chalk.blue('Select an account to reset:'),
+              choices: accounts.map((account: any) => account.name),
+            },
+          ])
+          .then((info: any) => {
+            if (info.account) {
+              const index = accounts.findIndex(
+                (account: any) => account.name === info.account
+              );
+              const accountNumber = accounts[index].number;
+
+              if (index > -1) {
+                config.set(`orders.${accountNumber}`, []);
+                config.set('accounts', [
+                  ...config.get('accounts'),
+                  {
+                    ...accounts[index],
+                    balance: accounts[index].initialBalance,
+                  },
+                ]);
+                console.log(`Account ${info.account} reset.`);
               } else {
                 console.log(`Account ${info.account} not found.`);
               }
@@ -295,7 +333,6 @@ class CommandController {
     ticker: string,
     quantity: number
   ) {
-
     // const spinner = ora('Placing market order...').start();
 
     const accounts = config.get('accounts');
@@ -318,15 +355,25 @@ class CommandController {
       const order = await InvestmentAccount.buyOrder(ticker, quantity);
       config.set('orders', {
         ...config.get('orders'),
-        [accountNumber]: [...config.get(`orders.${accountNumber}`), order].filter(Boolean)
+        [accountNumber]: [
+          ...config.get(`orders.${accountNumber}`),
+          order,
+        ].filter(Boolean),
       });
     } else if (orderType === TransactionType.SELL) {
       const order = await InvestmentAccount.sellOrder(ticker, quantity);
       config.set('orders', {
         ...config.get('orders'),
-        [accountNumber]: [...config.get(`orders.${accountNumber}`), order].filter(Boolean)
+        [accountNumber]: [
+          ...config.get(`orders.${accountNumber}`),
+          order,
+        ].filter(Boolean),
       });
     }
+  }
+
+  static async accountStats(accountNumber: number) {
+    console.log('stats');
   }
 }
 

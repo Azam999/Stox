@@ -90,6 +90,11 @@ program
     }
   });
 
+program
+  .command('stats')
+  .argument('<accountNumber>')
+  .action((accountNumber: number) => { CommandController.accountStats(accountNumber); });
+
 program.parse(process.argv);
 
 // const options = program.opts();

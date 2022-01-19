@@ -66,7 +66,7 @@ class InvestmentAccount {
     return {
       type: 'sell',
       ticker,
-      stockPrice,
+      price: stockPrice,
       quantity,
       totalPrice,
       date,
