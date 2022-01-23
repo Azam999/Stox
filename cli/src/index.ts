@@ -3,8 +3,6 @@ import chalk from 'chalk';
 import CommandController from './controllers/command.controller';
 import { TransactionType } from './ts/enums/investmentAccount';
 
-
-
 // Initialize commander
 const program = new Command();
 
@@ -76,24 +74,44 @@ program
   .argument('<orderType>')
   .argument('<ticker>')
   .argument('<quantity>')
-  .action((accountNumber: number, orderType: string, ticker: string, quantity: number) => {
-    if (orderType.toUpperCase() == TransactionType.BUY) {
-      CommandController.marketOrder(accountNumber, TransactionType.BUY, ticker, quantity);
-    } else if (orderType.toUpperCase() == TransactionType.SELL) {
-      CommandController.marketOrder(accountNumber, TransactionType.SELL, ticker, quantity);
-    } else {
-      console.log(
-        chalk.red(
-          `${orderType} is not a valid order type. Please use one of the following: buy, sell`
-        )
-      );
+  .action(
+    (
+      accountNumber: number,
+      orderType: string,
+      ticker: string,
+      quantity: string
+    ) => {
+      if (orderType.toUpperCase() == TransactionType.BUY) {
+        CommandController.marketOrder(
+          accountNumber,
+          TransactionType.BUY,
+          ticker,
+          quantity
+        );
+      } else if (orderType.toUpperCase() == TransactionType.SELL) {
+        CommandController.marketOrder(
+          accountNumber,
+          TransactionType.SELL,
+          ticker,
+          quantity
+        );
+      } else {
+        console.log(
+          chalk.red(
+            `${orderType} is not a valid order type. Please use one of the following: buy, sell`
+          )
+        );
+      }
     }
-  });
+  );
 
 program
   .command('stats')
   .argument('<accountNumber>')
-  .action((accountNumber: number) => { CommandController.accountStats(accountNumber); });
+  .action((accountNumber: number) => {
+    const stats = CommandController.accountStats(accountNumber);
+    console.log(stats);
+  });
 
 program.parse(process.argv);
 

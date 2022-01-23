@@ -1,6 +1,9 @@
-import StockData from "./stockData";
-import ITransaction from "./ts/interfaces/investmentAccount";
-import IStock from "./ts/interfaces/stock";
+import chalk from 'chalk';
+import config from './config/config';
+import StockData from './stockData';
+import { TransactionType } from './ts/enums/investmentAccount';
+import { ITransaction } from './ts/interfaces/investmentAccount';
+import IStock from './ts/interfaces/stock';
 
 class InvestmentAccount {
   _accountName: string;
@@ -43,31 +46,56 @@ class InvestmentAccount {
     return `Account Name: ${this._accountName}\nAccount Number: ${this._accountNumber}\nBalance: $${this._balance}`;
   }
 
-  static async buyOrder(ticker: string, quantity: number) {
+  static getAllOrders(accountNumber: number): [ITransaction[], ITransaction[]] {
+    const orders = config.get(`orders.${accountNumber}`);
+    const buyOrders: ITransaction[] = [];
+    const sellOrders: ITransaction[] = [];
+
+    // fill arrays with buy and sell orders
+    orders.forEach((order: ITransaction) => {
+      if (order.type.toUpperCase() === TransactionType.BUY) {
+        buyOrders.push(order);
+      } else if (order.type.toUpperCase() === TransactionType.SELL) {
+        sellOrders.push(order);
+      }
+    });
+
+    return [buyOrders, sellOrders];
+  }
+
+  static async buyOrder(ticker: string, quantity: string) {
     const stock: IStock[] = await StockData.getStockQuote([ticker]);
     const stockPrice = stock[0].regularMarketPrice;
-    const totalPrice = stockPrice * quantity;
+    const totalPrice = stockPrice * parseInt(quantity);
     const date = Date.now();
     return {
       type: 'buy',
       ticker,
       stockPrice,
-      quantity,
+      quantity: parseInt(quantity),
       totalPrice,
       date,
     };
   }
 
-  static async sellOrder(ticker: string, quantity: number) {
+  static async sellOrder(ticker: string, quantity: string, accountNumber: number) {
     const stock: IStock[] = await StockData.getStockQuote([ticker]);
     const stockPrice = stock[0].regularMarketPrice;
-    const totalPrice = stockPrice * quantity;
+    const totalPrice = stockPrice * parseInt(quantity);
     const date = Date.now();
+
+    const allOrders = this.getAllOrders(accountNumber);
+    const buyOrders = allOrders[0];
+    const sellOrders = allOrders[1];
+
+    // determine if there is enough stock to sell
+    
+
     return {
       type: 'sell',
       ticker,
       price: stockPrice,
-      quantity,
+      quantity: parseInt(quantity),
       totalPrice,
       date,
     };

@@ -7,6 +7,11 @@ import inquirer from 'inquirer';
 import InvestmentAccount from '../investmentAccount';
 import IStock from '../ts/interfaces/stock';
 import { TransactionType } from '../ts/enums/investmentAccount';
+import {
+  ITransaction,
+  IAccountInfo,
+  IAccount,
+} from '../ts/interfaces/investmentAccount';
 import config from '../config/config';
 
 class CommandController {
@@ -37,7 +42,8 @@ class CommandController {
     spinner.stop();
 
     stockQuotes = stockQuotes.filter(
-      (stock: any) => stock.quoteType === 'EQUITY' || stock.quoteType === 'ETF'
+      (stock: IStock) =>
+        stock.quoteType === 'EQUITY' || stock.quoteType === 'ETF'
     );
 
     const table = new Table({
@@ -211,7 +217,7 @@ class CommandController {
             message: chalk.blue('Initial Balance ($):'),
           },
         ])
-        .then((info: any) => {
+        .then((info: IAccountInfo) => {
           if (info.accountName && info.initialBalance) {
             if (
               typeof parseFloat(info.initialBalance) !== 'number' ||
@@ -240,6 +246,7 @@ class CommandController {
 
               // Initialize where orders will be placed
               config.set(`orders.${account.accountNumber}`, []);
+              config.set(`stats.${account.accountNumber}`, {});
 
               console.log(account.details);
             }
@@ -261,21 +268,22 @@ class CommandController {
               type: 'list',
               name: 'account',
               message: chalk.blue('Select an account to remove:'),
-              choices: accounts.map((account: any) => account.name),
+              choices: accounts.map((account: IAccount) => account.name),
             },
           ])
           .then((info: any) => {
             if (info.account) {
               const index = accounts.findIndex(
-                (account: any) => account.name === info.account
+                (account: IAccount) => account.name === info.account
               );
               const accountNumber = accounts[index].number;
 
               if (index > -1) {
                 config.delete(`orders.${accountNumber}`);
+                config.delete(`stats.${accountNumber}`);
                 config.set(
                   'accounts',
-                  accounts.filter((_: any, i: number) => i !== index)
+                  accounts.filter((_: IAccount, i: number) => i !== index)
                 );
                 console.log(`Account ${info.account} removed.`);
               } else {
@@ -296,18 +304,19 @@ class CommandController {
               type: 'list',
               name: 'account',
               message: chalk.blue('Select an account to reset:'),
-              choices: accounts.map((account: any) => account.name),
+              choices: accounts.map((account: IAccount) => account.name),
             },
           ])
           .then((info: any) => {
             if (info.account) {
               const index = accounts.findIndex(
-                (account: any) => account.name === info.account
+                (account: IAccount) => account.name === info.account
               );
               const accountNumber = accounts[index].number;
 
               if (index > -1) {
                 config.set(`orders.${accountNumber}`, []);
+                config.set(`stats.${accountNumber}`, {});
                 config.set('accounts', [
                   ...config.get('accounts'),
                   {
@@ -331,10 +340,8 @@ class CommandController {
     accountNumber: number,
     orderType: TransactionType,
     ticker: string,
-    quantity: number
+    quantity: string
   ) {
-    // const spinner = ora('Placing market order...').start();
-
     const accounts = config.get('accounts');
     let account: {
       account: object;
@@ -351,8 +358,22 @@ class CommandController {
       }
     }
 
+    const statsQuantityLocation = `stats.${accountNumber}.quantity.${ticker}`;
+    const statsTotalInvestedLocation = `stats.${accountNumber}.totalInvested`;
+    const currentTotalInvested = config.get(statsTotalInvestedLocation) || 0;
+
     if (orderType === TransactionType.BUY) {
+      const currentQuantity = config.get(statsQuantityLocation);
+      if (currentQuantity) {
+        const newQuantity = parseFloat(quantity) + currentQuantity;
+        config.set(statsQuantityLocation, newQuantity);
+      } else {
+        const newQuantity = parseFloat(quantity);
+        config.set(statsQuantityLocation, newQuantity);
+      }
+
       const order = await InvestmentAccount.buyOrder(ticker, quantity);
+
       config.set('orders', {
         ...config.get('orders'),
         [accountNumber]: [
@@ -360,20 +381,48 @@ class CommandController {
           order,
         ].filter(Boolean),
       });
+
+      config.set(
+        statsTotalInvestedLocation,
+        currentTotalInvested + order.totalPrice
+      );
     } else if (orderType === TransactionType.SELL) {
-      const order = await InvestmentAccount.sellOrder(ticker, quantity);
-      config.set('orders', {
-        ...config.get('orders'),
-        [accountNumber]: [
-          ...config.get(`orders.${accountNumber}`),
-          order,
-        ].filter(Boolean),
-      });
+      const currentQuantity = config.get(statsQuantityLocation);
+      if (currentQuantity) {
+        if (quantity > currentQuantity) {
+          console.log(
+            `You do not have enough shares to sell. You have ${currentQuantity} shares.`
+          );
+        } else {
+          const newQuantity = currentQuantity - parseFloat(quantity);
+          config.set(statsQuantityLocation, newQuantity);
+
+          const order = await InvestmentAccount.sellOrder(
+            ticker,
+            quantity,
+            accountNumber
+          );
+          config.set('orders', {
+            ...config.get('orders'),
+            [accountNumber]: [
+              ...config.get(`orders.${accountNumber}`),
+              order,
+            ].filter(Boolean),
+          });
+
+          config.set(
+            statsTotalInvestedLocation,
+            currentTotalInvested + order.totalPrice
+          );
+        }
+      } else {
+        console.log(`${ticker} not found in account ${accountNumber}.`);
+      }
     }
   }
 
-  static async accountStats(accountNumber: number) {
-    console.log('stats');
+  static accountStats(accountNumber: number) {
+    
   }
 }
 
