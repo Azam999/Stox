@@ -38,9 +38,9 @@ class FinanceUtility {
 
   static greenOrRed(value: number, symbol: string, atStart: boolean) {
     if (atStart) {
-      return value > 0 ? chalk.green(symbol + value) : chalk.redBright(symbol + value);
+      return value > 0 ? chalk.greenBright(symbol + value) : chalk.redBright(symbol + value);
     } else {
-      return value > 0 ? chalk.green(value + symbol) : chalk.redBright(value + symbol);
+      return value > 0 ? chalk.greenBright(value + symbol) : chalk.redBright(value + symbol);
     }
   }
 }

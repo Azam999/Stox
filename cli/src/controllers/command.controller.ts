@@ -422,7 +422,86 @@ class CommandController {
   }
 
   static accountStats(accountNumber: number) {
-    
+    const orders = config.get(`orders.${accountNumber}`);
+    const buyOrders: ITransaction[] = [];
+    const sellOrders: ITransaction[] = [];
+    const allTickers: string[] = [];
+
+    // fill arrays with buy and sell orders
+    orders.forEach((order: ITransaction) => {
+      if (!allTickers.includes(order.ticker)) {
+        allTickers.push(order.ticker);
+      }
+
+      if (order.type.toUpperCase() === TransactionType.BUY) {
+        buyOrders.push(order);
+      } else if (order.type.toUpperCase() === TransactionType.SELL) {
+        sellOrders.push(order);
+      }
+    });
+
+    let tickersPercentReturn = {} as { [key: string]: number };
+
+    async function getPercentReturns() {
+      for (const ticker of allTickers) {
+        // get portfolio distribution for a ticker
+        const buyOrdersForTicker = buyOrders.filter(
+          (order: ITransaction) => order.ticker === ticker
+        );
+
+        const sellOrdersForTicker = sellOrders.filter(
+          (order: ITransaction) => order.ticker === ticker
+        );
+
+        let totalBuyPrice = 0;
+        let totalSellPrice = 0;
+
+        for (const order of buyOrdersForTicker) {
+          const totalPrice = order.totalPrice;
+          totalBuyPrice += totalPrice;
+        }
+
+        for (const order of sellOrdersForTicker) {
+          const totalPrice = order.totalPrice;
+          totalSellPrice += totalPrice;
+        }
+
+        const currentPrice = (await StockData.getStockQuote([ticker]))[0].regularMarketPrice;
+
+        const currentQuantity = config.get(
+          `stats.${accountNumber}.quantity.${ticker}`
+        );
+
+        const currentTotalPrice = currentPrice * currentQuantity;
+        const totalTickerReturn =
+          (currentTotalPrice + totalSellPrice) / totalBuyPrice;
+
+        tickersPercentReturn[ticker] = (totalTickerReturn - 1) * 100;
+      }
+    }
+
+    getPercentReturns()
+      .then(() => {
+        const table = new Table({
+          style: {
+            head: ['cyan']
+          },
+          head: ['Ticker', 'Return %']
+        });
+
+        for (const ticker of allTickers) {
+          if (tickersPercentReturn[ticker] < 0) {
+            table.push([ticker, chalk.redBright(tickersPercentReturn[ticker])]);
+          } else {
+            table.push([ticker, chalk.greenBright(tickersPercentReturn[ticker])]);
+          }
+        }
+
+        console.log(table.toString());
+      })
+      .catch((err) => {
+        console.log('error');
+      });
   }
 }
 

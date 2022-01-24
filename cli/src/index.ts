@@ -109,8 +109,7 @@ program
   .command('stats')
   .argument('<accountNumber>')
   .action((accountNumber: number) => {
-    const stats = CommandController.accountStats(accountNumber);
-    console.log(stats);
+    CommandController.accountStats(accountNumber);
   });
 
 program.parse(process.argv);

@@ -1,10 +1,10 @@
 import { TransactionType, SecurityType } from '../enums/investmentAccount';
 interface ITransaction {
   type: TransactionType;
-  securityType: SecurityType;
   ticker: string;
-  quantity: number;
   price: number;
+  quantity: number;
+  totalPrice: number;
   date: Date;
   // orderType: string
 }
