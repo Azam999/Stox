@@ -421,7 +421,7 @@ class CommandController {
     }
   }
 
-  static accountStats(accountNumber: number) {
+  static tickersReturn(accountNumber: number) {
     const orders = config.get(`orders.${accountNumber}`);
     const buyOrders: ITransaction[] = [];
     const sellOrders: ITransaction[] = [];
@@ -466,7 +466,8 @@ class CommandController {
           totalSellPrice += totalPrice;
         }
 
-        const currentPrice = (await StockData.getStockQuote([ticker]))[0].regularMarketPrice;
+        const currentPrice = (await StockData.getStockQuote([ticker]))[0]
+          .regularMarketPrice;
 
         const currentQuantity = config.get(
           `stats.${accountNumber}.quantity.${ticker}`
@@ -484,16 +485,19 @@ class CommandController {
       .then(() => {
         const table = new Table({
           style: {
-            head: ['cyan']
+            head: ['cyan'],
           },
-          head: ['Ticker', 'Return %']
+          head: ['Ticker', 'Return %'],
         });
 
         for (const ticker of allTickers) {
           if (tickersPercentReturn[ticker] < 0) {
             table.push([ticker, chalk.redBright(tickersPercentReturn[ticker])]);
           } else {
-            table.push([ticker, chalk.greenBright(tickersPercentReturn[ticker])]);
+            table.push([
+              ticker,
+              chalk.greenBright(tickersPercentReturn[ticker]),
+            ]);
           }
         }
 
@@ -502,6 +506,36 @@ class CommandController {
       .catch((err) => {
         console.log('error');
       });
+  }
+
+  static async transactions(accountNumber: string, action: string) {
+    const table: any = new Table({
+      style: {
+        head: ['cyan'],
+      },
+      head: ['Type', 'Ticker', 'Price', 'Total Price', 'Quantity', 'Date'],
+    });
+    
+    const orders = config.get(`orders.${accountNumber}`);
+    const transactions: ITransaction[] = [];
+    for (const order of orders) {
+      if (order.type.toUpperCase() === action.toUpperCase()) {
+        transactions.push(order);
+      }
+    }
+
+    for (const transaction of transactions) {
+      table.push([
+        transaction.type,
+        transaction.ticker,
+        transaction.price,
+        transaction.totalPrice,
+        transaction.quantity,
+        transaction.date,
+      ]);
+    }
+
+    console.log(table.toString());
   }
 }
 

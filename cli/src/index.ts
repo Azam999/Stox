@@ -19,7 +19,7 @@ program
   .description(
     'Get Major Indices: S&P 500, Dow Jones Industrial Average, Nasdaq Composite'
   )
-  .action(async () => {
+  .action(() => {
     CommandController.indices();
   });
 
@@ -108,8 +108,19 @@ program
 program
   .command('stats')
   .argument('<accountNumber>')
-  .action((accountNumber: number) => {
-    CommandController.accountStats(accountNumber);
+  .argument('<action>')
+  .action((accountNumber: number, action: string) => {
+    if (action.toUpperCase() == 'RETURNS') {
+      CommandController.tickersReturn(accountNumber);
+    }
+  });
+
+program
+  .command('transactions')
+  .argument('<accountNumber>')
+  .argument('<action>')
+  .action((accountNumber: string, action: string) => {
+    CommandController.transactions(accountNumber, action);
   });
 
 program.parse(process.argv);

@@ -71,7 +71,7 @@ class InvestmentAccount {
     return {
       type: 'buy',
       ticker,
-      stockPrice,
+      price: stockPrice,
       quantity: parseInt(quantity),
       totalPrice,
       date,
