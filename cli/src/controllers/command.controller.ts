@@ -547,7 +547,7 @@ class CommandController {
       });
   }
 
-  static async transactions(accountNumber: string, action: string) {
+  static async transactions(accountNumber: number, action: string) {
     const table: any = new Table({
       style: {
         head: ['cyan'],
@@ -577,7 +577,7 @@ class CommandController {
     console.log(table.toString());
   }
 
-  static holdings(accountNumber: string) {
+  static holdings(accountNumber: number) {
     const table = new Table({
       style: {
         head: ['cyan'],

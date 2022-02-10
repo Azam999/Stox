@@ -3,7 +3,9 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import CommandController from './controllers/command.controller';
+import StockData from './stockData';
 import { TransactionType } from './ts/enums/investmentAccount';
+import ValidationController from './controllers/validation.controller';
 
 // Initialize commander
 const program = new Command();
@@ -31,7 +33,17 @@ program
     'Get the data for a ticker or list of tickers separated by commas'
   )
   .argument('<tickers>', 'Ticker symbol')
-  .action((tickers: string) => {
+  .action(async (tickers: string) => {
+    const stockData = await StockData.getStockQuote([tickers]);
+
+    if (tickers.split(',').length != stockData.length) {
+      console.log(
+        chalk.red(
+          `Some tickers could not be found. Please check the ticker symbols and try again.`
+        )
+      );
+    }
+
     CommandController.stockQuotes(tickers);
   });
 
@@ -43,7 +55,28 @@ program
   .argument('<statementName>')
   .argument('<period>')
   .argument('<ticker>')
-  .action((statementName: string, period: string, ticker: string) => {
+  .action(async (statementName: string, period: string, ticker: string) => {
+    const stockData = await StockData.getStockQuote([ticker]);
+    if (stockData.length <= 0) {
+      return console.log(
+        chalk.red(
+          `Ticker ${chalk.yellow(
+            ticker
+          )} could not be found. Please check the ticker symbol and try again.`
+        )
+      );
+    }
+
+    if (period != 'annual' && period != 'quarterly') {
+      return console.log(
+        chalk.red(
+          `Invalid period. Please use either ${chalk.yellow(
+            'annual'
+          )} or ${chalk.yellow('quarterly')} as the second argument`
+        )
+      );
+    }
+
     switch (statementName) {
       case 'balancesheet':
         CommandController.balanceSheets(period, ticker);
@@ -57,7 +90,9 @@ program
       default:
         console.log(
           chalk.red(
-            `${statementName} is not a valid statement name. Please use one of the following: balancesheet, income, cashflow`
+            `${statementName} is not a valid statement name. Please use one of the following: ${chalk.yellow(
+              '\nbalancesheet \nincome \ncashflow'
+            )}`
           )
         );
     }
@@ -65,7 +100,9 @@ program
 
 program
   .command('account')
-  .description('Perform actions on an investment account (create, delete, reset, list)')
+  .description(
+    'Perform actions on an investment account (create, delete, reset, list)'
+  )
   .argument('<action>')
   .action((action: string) => {
     CommandController.accountAction(action);
@@ -73,17 +110,35 @@ program
 
 program
   .command('order')
+  .description('Place an order on an investment account (buy, sell)')
   .argument('<accountNumber')
   .argument('<orderType>')
   .argument('<ticker>')
   .argument('<quantity>')
   .action(
-    (
+    async (
       accountNumber: number,
       orderType: string,
       ticker: string,
       quantity: string
     ) => {
+      const accountExists = ValidationController.accountExists(accountNumber);
+
+      if (!accountExists) {
+        return;
+      }
+
+      const stockData = await StockData.getStockQuote([ticker]);
+      if (stockData.length <= 0) {
+        return console.log(
+          chalk.red(
+            `Ticker ${chalk.yellow(
+              ticker
+            )} could not be found. Please check the ticker symbol and try again.`
+          )
+        );
+      }
+
       if (orderType.toUpperCase() == TransactionType.BUY) {
         CommandController.marketOrder(
           accountNumber,
@@ -110,26 +165,65 @@ program
 
 program
   .command('stats')
+  .description('Get account statistics')
   .argument('<accountNumber>')
   .argument('<action>')
   .action((accountNumber: number, action: string) => {
+    const accountExists = ValidationController.accountExists(accountNumber);
+
+    if (!accountExists) {
+      return;
+    }
+
     if (action.toUpperCase() == 'RETURNS') {
       CommandController.tickersReturn(accountNumber);
+    } else {
+      console.log(
+        chalk.red(
+          `${action} is not a valid action. Please use one of the following: ${chalk.yellow(
+            '\nreturns'
+          )}`
+        )
+      );
     }
   });
 
 program
   .command('transactions')
+  .description('Get account transactions')
   .argument('<accountNumber>')
   .argument('<action>')
-  .action((accountNumber: string, action: string) => {
+  .action((accountNumber: number, action: string) => {
+    const accountExists = ValidationController.accountExists(accountNumber);
+
+    if (!accountExists) {
+      return;
+    }
+
+    if (action != TransactionType.BUY && action != TransactionType.SELL) {
+      return console.log(
+        chalk.red(
+          `${action} is not a valid action. Please use one of the following: ${chalk.yellow(
+            '\nbuy \nsell'
+          )}`
+        )
+      );
+    }
+
     CommandController.transactions(accountNumber, action);
   });
 
 program
   .command('holdings')
+  .description('Get account holdings')
   .argument('<accountNumber>')
-  .action((accountNumber: string) => {
+  .action((accountNumber: number) => {
+    const accountExists = ValidationController.accountExists(accountNumber);
+
+    if (!accountExists) {
+      return;
+    }
+
     CommandController.holdings(accountNumber);
   });
 
