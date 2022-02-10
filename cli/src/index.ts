@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { Command } from 'commander';
 import chalk from 'chalk';
 import CommandController from './controllers/command.controller';
@@ -63,6 +65,7 @@ program
 
 program
   .command('account')
+  .description('Perform actions on an investment account (create, delete, reset, list)')
   .argument('<action>')
   .action((action: string) => {
     CommandController.accountAction(action);
@@ -128,7 +131,7 @@ program
   .argument('<accountNumber>')
   .action((accountNumber: string) => {
     CommandController.holdings(accountNumber);
-  })
+  });
 
 program.parse(process.argv);
 

@@ -1,13 +1,28 @@
 {
-  "name": "stox",
-  "version": "1.0.0",
+  "name": "stox-tracker",
+  "version": "1.0.1",
   "description": "Stock CLI",
-  "main": "index.js",
+  "main": "/cli/build/index.js",
   "scripts": {
     "dev:build": "tsc -w"
   },
   "author": "Azam Ahmed",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Azam999/Stox"
+  },
+  "keywords": [
+    "stock",
+    "cli",
+    "stock-cli",
+    "stox",
+    "stock-market",
+    "stock-tracker"
+  ],
+  "bin": {
+    "stox": "./build/index.js"
+  },
   "dependencies": {
     "axios": "^0.24.0",
     "chalk": "^4.1.2",

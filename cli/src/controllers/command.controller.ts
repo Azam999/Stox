@@ -333,6 +333,45 @@ class CommandController {
       } else {
         console.log(`No accounts found.`);
       }
+    } else if (action == 'list') {
+      const accounts = config.get('accounts');
+
+      if (accounts.length > 0) {
+        const accountLabels: string[] = [
+          'Account',
+          'Number',
+          'Initial Balance',
+          'Balance',
+        ];
+
+        const table = new Table({
+          style: {
+            head: ['cyan'],
+          },
+          head: accountLabels,
+        });
+
+        table.push(
+          ...accounts.map((account: IAccount) => [
+            chalk.yellow(account.name),
+            chalk.white(account.number),
+            chalk.white(account.initialBalance),
+            chalk.white(account.balance),
+          ])
+        );
+
+        console.log(table.toString());
+      } else {
+        console.log(`No accounts found.`);
+      }
+    } else {
+      console.log(
+        chalk.red(
+          `"${action}" is not a valid action. Please use: ${chalk.yellow(
+            `\ncreate \nremove \nreset \nlist`
+          )}`
+        )
+      );
     }
   }
 
@@ -515,7 +554,7 @@ class CommandController {
       },
       head: ['Type', 'Ticker', 'Price', 'Total Price', 'Quantity', 'Date'],
     });
-    
+
     const orders = config.get(`orders.${accountNumber}`);
     const transactions: ITransaction[] = [];
     for (const order of orders) {
