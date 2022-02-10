@@ -123,6 +123,13 @@ program
     CommandController.transactions(accountNumber, action);
   });
 
+program
+  .command('holdings')
+  .argument('<accountNumber>')
+  .action((accountNumber: string) => {
+    CommandController.holdings(accountNumber);
+  })
+
 program.parse(process.argv);
 
 // const options = program.opts();

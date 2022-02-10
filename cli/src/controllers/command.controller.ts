@@ -537,6 +537,22 @@ class CommandController {
 
     console.log(table.toString());
   }
+
+  static holdings(accountNumber: string) {
+    const table = new Table({
+      style: {
+        head: ['cyan'],
+      },
+      head: ['Ticker', 'Quantity'],
+    });
+
+    const stats = config.get(`stats.${accountNumber}.quantity`);
+    for (const ticker in stats) {
+      table.push([ticker, stats[ticker]]);
+    }
+
+    console.log(table.toString());
+  }
 }
 
 export default CommandController;
