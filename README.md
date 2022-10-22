@@ -13,4 +13,4 @@ npm i stox-tracker
 ### Test it out
 
 
-Access all of the commands: [Commands Spreadsheet](https://docs.google.com/spreadsheets/d/1Q9lgeEiS6NXu_4uQ-Dtv6SicAmeWbw62l-Hq0q9vvqU/edit?usp=sharing)
+Access all of the commands: `cli/src/index.ts`
