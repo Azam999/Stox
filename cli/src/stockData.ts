@@ -25,7 +25,12 @@ class StockData {
   }
 
   static async getStockQuote(tickers: string[]) {
-    const tickers_array = tickers.join(',');
+    // Validate each ticker: only allow alphanumeric characters, dots, hyphens, and carets
+    const validTickers = tickers.map(t => t.trim()).filter(t => /^[A-Z0-9.^-]{1,10}$/i.test(t));
+    if (validTickers.length !== tickers.length) {
+      throw new Error('One or more ticker symbols contain invalid characters.');
+    }
+    const tickers_array = encodeURIComponent(validTickers.join(','));
     const url = `${this.yf_quote_url}${tickers_array}${this.yf_quote_ending_url}`;
   
     const response = await axios.get(url);
